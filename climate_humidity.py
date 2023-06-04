@@ -6,7 +6,14 @@ import matplotlib.pyplot as plt
 import folium 
 import shapely
 import streamlit as st 
-from streamlit_folium import st_folium 
+
+app_title = 'Climate Analysis App'
+app_sub_title = 'Open Meteo'
+
+def main():
+    st.set_page_config(app_title)
+    st.title(app_title)
+    st.caption(app_sub_title)
 
 
 # Latitude and longitude coordinates for your location
@@ -209,8 +216,7 @@ class humdity_calcs:
 
 
 if __name__=='__main__':
-    h = humdity_calcs('time','relativehumidity_2m','dewpoint_2m','temperature_2m',location='Phoenix')
-    h.peak_comfort()
+    main()
 
 
 
