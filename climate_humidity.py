@@ -3,8 +3,11 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
-from scipy.interpolate import make_interp_spline 
-import numpy as np
+import folium 
+import shapely
+import streamlit as st 
+from streamlit_folium import st_folium 
+
 
 # Latitude and longitude coordinates for your location
 latitude = 33.465959
