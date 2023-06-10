@@ -3,41 +3,57 @@ import requests
 import pandas as pd
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
-import folium 
-import shapely
 import streamlit as st 
+from streamlit_folium import st_folium
+import folium
 
 app_title = 'Climate Analysis App'
 app_sub_title = 'Open Meteo'
 
-def main():
-    st.set_page_config(app_title)
-    st.title(app_title)
-    st.caption(app_sub_title)
+class data_load:
+    def __init__(self, latitude, longitude):
+        self.latitude = latitude
+        self.longitude = longitude
 
+    def data_processing(self):
+        # Latitude and longitude coordinates for your location
+        #latitude = 33.465959
+        #longitude = -112.073502
 
-# Latitude and longitude coordinates for your location
-latitude = 33.465959
-longitude = -112.073502
+        # Set up the initial start date and end date for the first 5-year window
+        end_date = datetime.today().strftime('%Y-%m-%d')
+        start_date = (datetime.today() - timedelta(days=365*5)).strftime('%Y-%m-%d')
 
-# Set up the initial start date and end date for the first 5-year window
-end_date = datetime.today().strftime('%Y-%m-%d')
-start_date = (datetime.today() - timedelta(days=365*5)).strftime('%Y-%m-%d')
+        # Construct the URL with the initial start_date and end_date
+        url = f'https://archive-api.open-meteo.com/v1/archive?latitude={self.latitude}&longitude={self.longitude}&start_date={start_date}&end_date={end_date}&hourly=temperature_2m&hourly=dewpoint_2m&hourly=relativehumidity_2m'
 
-# Construct the URL with the initial start_date and end_date
-url = f'https://archive-api.open-meteo.com/v1/archive?latitude={latitude}&longitude={longitude}&start_date={start_date}&end_date={end_date}&hourly=temperature_2m&hourly=dewpoint_2m&hourly=relativehumidity_2m'
+        # Retrieve the data and create a pandas DataFrame
+        response = requests.get(url)
+        data = response.json()
+        df = pd.DataFrame(data).transpose()
+        df = df[['time','relativehumidity_2m','dewpoint_2m','temperature_2m']]
+        df = df.transpose()
+        df = df[['hourly']].transpose()
+        df = df[['relativehumidity_2m','dewpoint_2m','temperature_2m','time']].explode(['relativehumidity_2m','dewpoint_2m','temperature_2m','time']) #need to do this for the others as well
+        df['temperature_2m'] = (df['temperature_2m'] * 1.8) + 32
+        df['dewpoint_2m'] = (df['dewpoint_2m'] * 1.8) + 32
+        df['time'] = pd.to_datetime(df['time'])
 
-# Retrieve the data and create a pandas DataFrame
-response = requests.get(url)
-data = response.json()
-df = pd.DataFrame(data).transpose()
-df = df[['time','relativehumidity_2m','dewpoint_2m','temperature_2m']]
-df = df.transpose()
-df = df[['hourly']].transpose()
-df = df[['relativehumidity_2m','dewpoint_2m','temperature_2m','time']].explode(['relativehumidity_2m','dewpoint_2m','temperature_2m','time']) #need to do this for the others as well
-df['temperature_2m'] = (df['temperature_2m'] * 1.8) + 32
-df['dewpoint_2m'] = (df['dewpoint_2m'] * 1.8) + 32
-df['time'] = pd.to_datetime(df['time'])
+class mapping:
+    def __init__(self):
+        self.latitude = None
+        self.longitude = None
+
+    def on_map_click(self,event):
+        self.latitude = event.latlng[0]
+        self.longitude = event.latlng[1]
+
+    def main_function(self):
+        m = folium.Map(location=[0, 0], zoom_start=2)
+        m.add_child(folium.ClickForMarker(popup=None, callback=self.on_map_click))
+
+        data_handler = data_load(self.latitude,self.longitude)
+        data_handler.data_processing()
 
 
 class humdity_calcs:
@@ -213,6 +229,12 @@ class humdity_calcs:
         #parameters are temp and humidity
         #temp: highs from 75-80, lows from 55-60
         #max daily relh as low as possible, max dp vs temp diff in day 
+
+def main():
+    st.set_page_config(app_title)
+    st.title(app_title)
+    st.caption(app_sub_title)
+
 
 
 if __name__=='__main__':
