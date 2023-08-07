@@ -7,9 +7,6 @@ import streamlit as st
 from streamlit_folium import st_folium
 import folium
 
-app_title = 'Climate Analysis App'
-app_sub_title = 'Open Meteo'
-
 class data_load:
     def __init__(self, latitude, longitude):
         self.latitude = latitude
@@ -39,6 +36,7 @@ class data_load:
         df['dewpoint_2m'] = (df['dewpoint_2m'] * 1.8) + 32
         df['time'] = pd.to_datetime(df['time'])
 
+
 class mapping:
     def __init__(self):
         self.latitude = None
@@ -50,8 +48,7 @@ class mapping:
 
     def main_function(self):
         m = folium.Map(location=[0, 0], zoom_start=2)
-        m.add_child(folium.ClickForMarker(popup=None, callback=self.on_map_click))
-
+        #m.add_child(folium.ClickForMarker(popup=None, callback=self.on_map_click))
         data_handler = data_load(self.latitude,self.longitude)
         data_handler.data_processing()
 
@@ -231,15 +228,14 @@ class humdity_calcs:
         #max daily relh as low as possible, max dp vs temp diff in day 
 
 def main():
-    st.set_page_config(app_title)
-    st.title(app_title)
-    st.caption(app_sub_title)
-
+    st.set_page_config(page_title='My Streamlit App')
+    st.title('Climate Analysis App')
+    st.caption('Source: Open Meteo')
+    #m = folium.Map(location=[0,0],zoom_start=2)
+    #st.write(m)
+    #mapper = mapping()
+    #mapper.main_function()
 
 
 if __name__=='__main__':
     main()
-
-
-
-
