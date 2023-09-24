@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 
 import requests
@@ -20,7 +21,6 @@ class data_load:
         self.latitude = latitude
         self.longitude = longitude
 
-    #APP WORKS
     #Data Processing for Humidity Methods
     def data_processing_humidity(self):
         # Sets up the initial start date and end date for the first 5-year window
@@ -43,7 +43,6 @@ class data_load:
         df['time'] = pd.to_datetime(df['time'])
         return df
 
-    #APP WORKS
     #Data Processing for Precipitation Methods
     def data_processing_precip(self):
         # Set up the initial start date and end date for the first 5-year window
@@ -65,7 +64,6 @@ class data_load:
         df['precipitation'] = (df['precipitation']/25.4)
         return df
 
-    #IN DEV
     #Data Processing for Temperature Methods
     def data_processing_temp(self):
         # Set up the initial start date and end date for the first 5-year window
@@ -87,7 +85,6 @@ class data_load:
         df['time'] = pd.to_datetime(df['time'])
         return df
 
-    #IN DEV
     #Data Processing for Wind Methods
     def data_processing_wind(self):
         end_date = datetime.today().strftime('%Y-%m-%d')
@@ -106,7 +103,6 @@ class data_load:
         df = df[['winddirection_10m','windspeed_10m','time']].explode(['winddirection_10m','windspeed_10m','time'])
         df['time'] = pd.to_datetime(df['time'])
 
-#IN DEV
 class temperature_calcs:
     
     def __init__(self, dataframe='na',date_col='na',date_type='na',temp_type='na'):
@@ -142,8 +138,18 @@ class temperature_calcs:
             raise ValueError("Dataframe not available. Call date_temps first.")
         else:
             fig, ax = plt.subplots()
+            fig.set_facecolor('#0E1117')
+            ax.set_facecolor('#0E1117')
             ax.plot(pltdf)
-            ax.set_title(f'{self.temp_type} Temps') 
+            ax.tick_params(axis='both', colors='#0E1117')
+            ax.tick_params(axis='x', labelcolor='white')
+            ax.tick_params(axis='y', labelcolor='white')
+
+            ax.set_title(f'{self.temp_type} Temps', color='white')
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
+            ax.spines['left'].set_visible(False)  
             st.pyplot(fig)
     
     def date_temp_plot_day(self,dydf):
@@ -151,18 +157,67 @@ class temperature_calcs:
             raise ValueError("Dataframe not available. Call date_temps first.")
         else:
             fig, ax = plt.subplots()
+            fig.set_facecolor('#0E1117')
+            ax.set_facecolor('#0E1117')
             ax.plot(dydf['combo'],dydf['temperature_2m'])
             num_ticks = 12
             num_data_points = len(dydf['combo'])
             step = max(1, num_data_points // num_ticks)
-            ax.set_xticks(dydf['combo'][::step])
-            plt.xticks(rotation=45)
-            ax.set_title(f'{self.temp_type} Temps') 
+            ax.tick_params(axis='both', colors='#0E1117')
+
+            ax.set_xticks(dydf.index[::step]) 
+            ax.set_xticklabels(dydf['combo'][::step], rotation=45, color='white')
+            #ax.set_yticklabels([])
+            ax.tick_params(axis='y', labelcolor='white')
+        
+            ax.set_title(f'{self.temp_type} Temps', color='white')
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
+            ax.spines['left'].set_visible(False) 
             st.pyplot(fig)
 
-    #APP WORKING
+    def stdv_plot(self,stdf):
+        fig, ax = plt.subplots()
+        fig.set_facecolor('#0E1117')
+        ax.set_facecolor('#0E1117')
+        ax.plot(stdf['combo'], stdf['mean_temp'], label='mean_temp')
+        ax.plot(stdf['combo'], stdf['p1_stdp'], label='p1_stdp')
+        ax.plot(stdf['combo'], stdf['p1_stdn'], label='p1_stdn')
+        num_ticks = 12
+        num_data_points = len(stdf['combo'])
+        step = max(1, num_data_points // num_ticks)
+        ax.tick_params(axis='both', colors='#0E1117')
+        ax.set_xticks(stdf['combo'][::step])
+        plt.xticks(rotation=45)
+        ax.set_title(f'{self.temp_type} Temp Standard Deviations',color='white') 
+        ax.tick_params(axis='x', labelcolor='white')
+        ax.tick_params(axis='y', labelcolor='white')
+
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+
+        st.pyplot(fig)
+
+    def diurnal_plot(self,drdf):
+        fig, ax = plt.subplots()
+        fig.set_facecolor('#0E1117')
+        ax.set_facecolor('#0E1117')
+        ax.plot(drdf['time'], drdf['diurnal'])
+        ax.tick_params(axis='both', colors='#0E1117')
+        ax.set_title('Diurnal Temps',color='white')
+        ax.tick_params(axis='x', labelcolor='white')
+        ax.tick_params(axis='y', labelcolor='white')
+
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False) 
+        st.pyplot(fig)
+
     def date_temps(self):
-        #UNDER DEV
         if self.date_type == 'day':
             #need to make sure this returns the average over the days
             if self.temp_type == 'Mean':  
@@ -189,7 +244,8 @@ class temperature_calcs:
             temp_day['combo'] = temp_day['month'] + temp_day['day']
             temp_day = temp_day.drop(columns=['month','day'])
             temp_day = temp_day.groupby(['combo'],as_index=False)['temperature_2m'].mean()
-            return temp_day
+            day_tmpdf = temp_day.copy(deep=True)
+            return day_tmpdf
 
         elif self.date_type == 'month':
             if self.temp_type == 'High':
@@ -209,17 +265,11 @@ class temperature_calcs:
                 return temp_month
             else:
                 ValueError('high, mean, or low required')
-        elif self.date_type == 'year':
-            #JUST USE MONTHLY FOR NOW
-            temp_year = self.dataframe.groupby(self.dataframe['time'].dt.year)['temperature_2m'].mean()
-            return temp_year
         else:
-            return ValueError('day, month, or year required')
+            return ValueError('day or month required')
 
-    #APP WORKING
     def stdv_temps(self):
         if self.temp_type == 'Mean':
-            #Don't use mean for now as people don't really think about mean temps 
             temp_month = self.dataframe.groupby(pd.Grouper(key = self.date_col, freq = 'D'))['temperature_2m'].mean()
         elif self.temp_type == 'High':
             temp_month = self.dataframe.groupby(pd.Grouper(key= self.date_col, freq= 'D'))['temperature_2m'].max()
@@ -261,22 +311,9 @@ class temperature_calcs:
         fin_std_df = fin_std_df.merge(ssdif,on='combo',how='left')
         fin_std_df['p1_stdp'] = fin_std_df['mean_temp'] + (fin_std_df['std_dev']*3)
         fin_std_df['p1_stdn'] = fin_std_df['mean_temp'] + (fin_std_df['std_dev']*-3)
-        #fin_std_df.plot(x='combo',y=['mean_temp','p1_stdp','p1_stdn'])
-        fig, ax = plt.subplots()
-        ax.plot(fin_std_df['combo'], fin_std_df['mean_temp'], label='mean_temp')
-        ax.plot(fin_std_df['combo'], fin_std_df['p1_stdp'], label='p1_stdp')
-        ax.plot(fin_std_df['combo'], fin_std_df['p1_stdn'], label='p1_stdn')
-        num_ticks = 12
-        num_data_points = len(fin_std_df['combo'])
-        step = max(1, num_data_points // num_ticks)
-        ax.set_xticks(fin_std_df['combo'][::step])
-        plt.xticks(rotation=45)
-        ax.set_title(f'{self.temp_type} Temp Standard Deviations') 
-        st.pyplot(fig)
+        return fin_std_df
 
-    #APP WORKING
     def diurnal_rng(self):
-        #Need to figure out how these can return a plot and the dataframe for a different method like this
         ht = temperature_calcs(dataframe=self.dataframe,date_col='time',date_type='month',temp_type='High')
         lt = temperature_calcs(dataframe=self.dataframe,date_col='time',date_type='month',temp_type='Low')
         dr_high = ht.date_temps()
@@ -287,12 +324,8 @@ class temperature_calcs:
         dr_merge = dr_merge.rename(columns={'temperature_2m_x':'max_tmp','temperature_2m_y':'min_tmp'})
         dr_merge['diurnal'] = dr_merge['max_tmp'] - dr_merge['min_tmp']
         dr_merge = dr_merge[['time','diurnal']]
-        fig, ax = plt.subplots()
-        ax.plot(dr_merge['time'], dr_merge['diurnal'])
-        ax.set_title('Diurnal Temps') 
-        st.pyplot(fig)
+        return dr_merge
 
-#IN DEV
 class precipitation_calcs:
     
     def __init__(self, dataframe, date_col, precip):
@@ -300,35 +333,52 @@ class precipitation_calcs:
         self.date_col = date_col
         self.precip  = precip 
 
-    #APP WORKS
+    def mon_prec_plot(self,mpdf):
+        fig, ax = plt.subplots()
+        fig.set_facecolor('#0E1117')
+        ax.set_facecolor('#0E1117')
+        ax.plot(mpdf)
+        ax.tick_params(axis='both', colors='#0E1117')
+        ax.set_title('Monthly Precipitation', color='white')
+        ax.tick_params(axis='x', labelcolor='white')
+        ax.tick_params(axis='y', labelcolor='white') 
+
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        st.pyplot(fig)
+
+    def mo_rain_plot(self,mrdf):
+        fig, ax = plt.subplots()
+        fig.set_facecolor('#0E1117')
+        ax.set_facecolor('#0E1117')
+        ax.plot(mrdf['month'],mrdf['precipitation'])
+        ax.tick_params(axis='both', colors='#0E1117')
+        ax.set_title('Rainy Days per Month', color='white')
+        ax.tick_params(axis='x', labelcolor='white')
+        ax.tick_params(axis='y', labelcolor='white') 
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        st.pyplot(fig)
+
     def monthly_prec(self): 
         precip_day = self.dataframe.groupby(pd.Grouper(key = self.date_col, freq = 'M'))[self.precip].sum()
         prec_df = pd.DataFrame(precip_day)
         new_prec = prec_df.reset_index()
         sorted_prec = new_prec.groupby(new_prec[self.date_col].dt.month)[self.precip].mean()
-        
-        fig, ax = plt.subplots()
-        ax.plot(sorted_prec)
-        ax.set_title('Monthly Precipitation') 
-        st.pyplot(fig)
+        return sorted_prec
 
-    #APP WORKS...but some of the data seems wrong (i.e. it should not be more than 30)
-    def morainy_cnt(self): #DONE - but need to validate what this does
-        #could pass a different date grouping through the initialization function
+    def morainy_cnt(self): 
         precip_cnt = self.dataframe.groupby(pd.Grouper(key = self.date_col, freq = 'M'))[self.precip].sum()
         precip_df = pd.DataFrame(precip_cnt)
         precip_df = precip_df.reset_index()
         precip_df['month'] = precip_df[self.date_col].dt.month
         precip_df = precip_df.groupby(['month'], as_index=False)[self.precip].sum()
-        #precip_df['precipitation'] = precip_df['precipitation'].round()
-        #precip_df.plot(x='month',y='precipitation')
-        
-        fig, ax = plt.subplots()
-        ax.plot(precip_df['month'],precip_df['precipitation'])
-        ax.set_title('Rainy Days per Month')
-        st.pyplot(fig)
+        return precip_df
 
-#APP WORKING
 class humdity_calcs:
     
     def __init__(self, dataframe, date_col='na', relative_humidity_col='na', dew_point_col='na', temp_col='na', location='na'):
@@ -339,7 +389,6 @@ class humdity_calcs:
         self.temp_col = temp_col
         self.location = location
 
-    #APP WORKS
     def mon_lbl(self,row):
         if row == 1:
             return '01'
@@ -362,11 +411,29 @@ class humdity_calcs:
         else:
             return row
 
-    #APP WORKS
     def comf_scrng(self,row):
         return 10 + (10 * row)
 
-    #APP WORKS
+    def peak_plot(self,pddf):
+        fig, ax = plt.subplots()
+        fig.set_facecolor('#0E1117')
+        ax.set_facecolor('#0E1117') 
+        ax.plot(pddf['moday'], pddf['comfort_score'])
+        num_ticks = 12
+        num_data_points = len(pddf['moday'])
+        step = max(1, num_data_points // num_ticks)
+        ax.tick_params(axis='both', colors='#0E1117') 
+        ax.set_xticks(pddf.index[::step])  
+        ax.set_xticklabels(pddf['moday'][::step], rotation=45, color='white')
+        ax.set_yticklabels([])
+        ax.set_title('Discomfort Rating', color='white')
+
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        st.pyplot(fig)
+
     def peak_cond(self):
         self.dataframe['day'] = self.dataframe[self.date_col].dt.day
         self.dataframe['month'] = self.dataframe[self.date_col].dt.month
@@ -381,7 +448,6 @@ class humdity_calcs:
         day_df['date'] = day_df['year'] + day_df['day']
         day_df = day_df.drop(columns=['year','day'])
 
-    #APP WORKS
     def peak_comfort(self):
         self.dataframe['day'] = self.dataframe['time'].dt.day
         self.dataframe['peak_cond'] = self.peak_cond()
@@ -441,23 +507,8 @@ class humdity_calcs:
         temp_df['hum_adj'] = temp_df['tot_hum_scr'] * 0.02
         temp_df['comfort_score'] = temp_df['temp_score'] + temp_df['hum_adj']
         temp_df = temp_df[['moday','comfort_score']]
+        return temp_df
 
-        fig, ax = plt.subplots()
-        ax.plot(temp_df['moday'], temp_df['comfort_score'])
-        num_ticks = 12
-        num_data_points = len(temp_df['moday'])
-        step = max(1, num_data_points // num_ticks)
-        ax.set_xticks(temp_df['moday'][::step])
-        plt.xticks(rotation=45)
-        ax.set_yticklabels([])
-        ax.set_title('Discomfort Rating') 
-        st.pyplot(fig)
-
-        #parameters are temp and humidity
-        #temp: highs from 75-80, lows from 55-60
-        #max daily relh as low as possible, max dp vs temp diff in day 
-
-#IN DEV
 def main():
     st.set_page_config(layout="wide")
     st.title(app_title)
@@ -471,7 +522,7 @@ def main():
 
         m = folium.Map()
         m.add_child(folium.LatLngPopup())
-        map = st_folium(m, height=350, width=700)
+        map = st_folium(m, height=500, width=700)
         data = None
         if map.get("last_clicked"):
             data = get_pos(map["last_clicked"]["lat"], map["last_clicked"]["lng"])
@@ -486,81 +537,106 @@ def main():
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_humidity()
             hum = humdity_calcs(dataframez,date_col='time',temp_col='temperature_2m',relative_humidity_col='relativehumidity_2m',dew_point_col='dewpoint_2m')
-            hum.peak_comfort()
+            pcdf = hum.peak_comfort()
+            hum.peak_plot(pddf=pcdf)
+            csv_string_pc = pcdf.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_pc.encode('utf-8'),key='csv_file',file_name='peak_comfort.csv')
             if data is not None:
                 st.write('Discomfort determined by higher lines as displayed by the line plot.')
         elif analysis_type == 'Monthly Precipitation':
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_precip()
             prec = precipitation_calcs(dataframez,date_col='time',precip='precipitation')
-            prec.monthly_prec()
+            mopr = prec.monthly_prec()
+            prec.mon_prec_plot(mopr)
+            csv_string_mp = mopr.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_mp.encode('utf-8'),key='csv_file',file_name='monthly_prec.csv')
             if data is not None:
                 st.write('Description of the monthly prec.')
         elif analysis_type == 'Rainy Days':
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_precip()
             prec = precipitation_calcs(dataframez,date_col='time',precip='precipitation')
-            prec.morainy_cnt()
+            rndy = prec.morainy_cnt()
+            prec.mo_rain_plot(rndy)
+            csv_string_rd = rndy.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_rd.encode('utf-8'),key='csv_file',file_name='rainy_days.csv')
         elif analysis_type == 'Monthly-Hi':
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_temp()
             tempz = temperature_calcs(dataframe=dataframez,date_col='time',date_type='month',temp_type='High')
             hi_df = tempz.date_temps()
             tempz.date_temp_plot_month(hi_df)
+            csv_string_mh = hi_df.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_mh.encode('utf-8'),key='csv_file',file_name='monthly_hi.csv')
         elif analysis_type == 'Monthly-Lo':
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_temp()
             tempz = temperature_calcs(dataframe=dataframez,date_col='time',date_type='month',temp_type='Low')
             lo_df = tempz.date_temps()
             tempz.date_temp_plot_month(lo_df)
+            csv_string_ml = lo_df.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_ml.encode('utf-8'),key='csv_file',file_name='monthly_lo.csv')
         elif analysis_type == 'Monthly-Mean':
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_temp()
             tempz = temperature_calcs(dataframe=dataframez,date_col='time',date_type='month',temp_type='Mean')
             mn_df = tempz.date_temps()
             tempz.date_temp_plot_month(mn_df)
+            csv_string_mm = mn_df.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_mm.encode('utf-8'),key='csv_file',file_name='monthly_mn.csv')
         elif analysis_type == 'Daily-Mean':
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_temp()
             tempz = temperature_calcs(dataframe=dataframez,date_col='time',date_type='day',temp_type='Mean')
             mn_dy = tempz.date_temps()
             tempz.date_temp_plot_day(mn_dy)
+            csv_string_dm = mn_dy.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_dm.encode('utf-8'),key='csv_file',file_name='daily_mn.csv')
         elif analysis_type == 'Daily-Hi':
-            #Under Dev
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_temp()
             tempz = temperature_calcs(dataframe=dataframez,date_col='time',date_type='day',temp_type='High')
             hi_dy = tempz.date_temps()
             tempz.date_temp_plot_day(hi_dy)
+            csv_string_dh = hi_dy.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_dh.encode('utf-8'),key='csv_file',file_name='daily_hi.csv')
         elif analysis_type == 'Daily-Lo':
-            #Under Dev
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_temp()
             tempz = temperature_calcs(dataframe=dataframez,date_col='time',date_type='day',temp_type='Low')
             lo_dy = tempz.date_temps()
             tempz.date_temp_plot_day(lo_dy)
+            csv_string_dl = lo_dy.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_dl.encode('utf-8'),key='csv_file',file_name='daily_lo.csv')
         elif analysis_type == 'Diurnal Range':
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_temp()
             tempz = temperature_calcs(dataframe=dataframez,date_col='time',temp_type='High')
-            tempz.diurnal_rng()
+            dr_df = tempz.diurnal_rng()
+            tempz.diurnal_plot(dr_df)
+            csv_string_dr = dr_df.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_dr.encode('utf-8'),key='csv_file',file_name='diurnal_rng.csv')
         elif analysis_type == 'Hi-Standard Devs':
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_temp()
             tempz = temperature_calcs(dataframe=dataframez,date_col='time',temp_type='High')
-            tempz.stdv_temps()
+            standev_df_hi = tempz.stdv_temps()
+            tempz.stdv_plot(standev_df_hi)
+            csv_string_stdv_hi = standev_df_hi.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_stdv_hi.encode('utf-8'),key='csv_file',file_name='stdv_hi.csv')
         elif analysis_type == 'Lo-Standard Devs':
             api = data_load(latitude=data[0],longitude=data[1])
             dataframez = api.data_processing_temp()
             tempz = temperature_calcs(dataframe=dataframez,date_col='time',temp_type='Low')
-            tempz.stdv_temps()
+            standev_df_lo = tempz.stdv_temps()
+            tempz.stdv_plot(standev_df_lo)
+            csv_string_stdv_lo = standev_df_lo.to_csv()
+            st.download_button(label='Download CSV',data=csv_string_stdv_lo.encode('utf-8'),key='csv_file',file_name='stdv_lo.csv')
         else:
+
             pass
 
 if __name__=='__main__':
     main()
-
-
-
-
 
